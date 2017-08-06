@@ -20,8 +20,11 @@ class DataGraph:
         row_nbrs = np.argwhere(relevant_row == True).flatten()
         return [{vertex, nbr} for nbr in column_nbrs + row_nbrs]
 
+    def _get_relevant_subgraph(self, simplex):
+        return {vr_simplex for vr_simplex in self.vr if simplex <= vr_simplex}
+
     def get_isomorphism_dict(self):
-        # TODO: write get_lovalhom function
+        # TODO: write get_localhom function
         # TODO: write check_isomorphism function
         isomorphism_dict = {}
         for vertex in range(self.matrix.shape[0]):
@@ -41,19 +44,19 @@ def lower_nbrs(g_matrix, u):
 
 
 def add_cofaces(g_matrix, k, t, N, V):
-    V.append(t)
+    V.add(t)
     if len(t) >= k:
         return V
     for v in N:
-        s = t + [v]
+        s = t | frozenset({v})
         M = np.intersect1d(N, lower_nbrs(g_matrix, v))
         V = add_cofaces(g_matrix, k, s, M, V)
     return V
 
 
 def incremental_vr(g_matrix, k):
-    V = []
+    V = set([])
     for u in range(g_matrix.shape[0]):
         N = lower_nbrs(g_matrix, u)
-        V = add_cofaces(g_matrix, k, [u], N, V)
+        V = add_cofaces(g_matrix, k, frozenset({u}), N, V)
     return V
