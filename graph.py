@@ -37,6 +37,7 @@ class DataGraph:
 
 # The incremental algorithm from https://pdfs.semanticscholar.org/e503/c24dcc7a8110a001ae653913ccd064c1044b.pdf
 # TODO: rename variables to make it readable
+# TODO: incorporate into the class
 def lower_nbrs(g_matrix, u):
     # look at the column with index u and return row nums with non-zeros
     relevant_column = g_matrix[:, u]
