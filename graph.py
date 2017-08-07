@@ -10,8 +10,29 @@ class DataGraph:
         self.matrix = np.logical_and(distance_matrix <= epsilon, distance_matrix != 0)
         # take only upper triangle of the matrix for information not to repeat itself
         self.matrix = np.triu(self.matrix)
-        self.vr = incremental_vr(self.matrix, dim)
+        self._get_vr_complex(dim)
         self.clusters = []
+        
+    def _get_vr_complex(self, dim):
+        # The incremental algorithm from https://pdfs.semanticscholar.org/e503/c24dcc7a8110a001ae653913ccd064c1044b.pdf
+        self.vr = []
+        for vertex in range(self.matrix.shape[0]):
+            nbrs = self._lower_nbrs(vertex)
+            self._add_cofaces(dim, {vertex}, nbrs)
+
+    def _lower_nbrs(self, vertex):
+        # look at the column with index `vertex` and return row nums with non-zeros
+        relevant_column = self.matrix[:, vertex]
+        return np.argwhere(relevant_column == True).flatten()
+
+    def _add_cofaces(self, dim, simplex, nbrs):
+        self.vr.append(simplex)
+        if len(simplex) >= dim:
+            return
+        for vertex in nbrs:
+            new_simplex = simplex | {vertex}
+            intersect = np.intersect1d(nbrs, self._lower_nbrs(vertex))
+            self._add_cofaces(dim, new_simplex, intersect)
 
     def _get_edges(self, vertex):
         relevant_column = self.matrix[:, vertex]
@@ -23,41 +44,13 @@ class DataGraph:
     def _get_relevant_subgraph(self, simplex):
         return {vr_simplex for vr_simplex in self.vr if simplex <= vr_simplex}
 
-    def get_isomorphism_dict(self):
+    def _get_isomorphism_dict(self):
         # TODO: write get_localhom function
         # TODO: write check_isomorphism function
         isomorphism_dict = {}
         for vertex in range(self.matrix.shape[0]):
-            edges = self._get_edges(self, vertex)
+            edges = self._get_edges(vertex)
             for edge in edges:
                 localhom_v = get_localhom(vertex)
                 localhom_e = get_localhom(edge)
                 isomorphism_dict[(vertex, edge)] = check_isomorphism(localhom_v, localhom_e)
-
-
-# The incremental algorithm from https://pdfs.semanticscholar.org/e503/c24dcc7a8110a001ae653913ccd064c1044b.pdf
-# TODO: rename variables to make it readable
-# TODO: incorporate into the class
-def lower_nbrs(g_matrix, u):
-    # look at the column with index u and return row nums with non-zeros
-    relevant_column = g_matrix[:, u]
-    return np.argwhere(relevant_column == True).flatten()
-
-
-def add_cofaces(g_matrix, k, t, N, V):
-    V.add(t)
-    if len(t) >= k:
-        return V
-    for v in N:
-        s = t | frozenset({v})
-        M = np.intersect1d(N, lower_nbrs(g_matrix, v))
-        V = add_cofaces(g_matrix, k, s, M, V)
-    return V
-
-
-def incremental_vr(g_matrix, k):
-    V = set([])
-    for u in range(g_matrix.shape[0]):
-        N = lower_nbrs(g_matrix, u)
-        V = add_cofaces(g_matrix, k, frozenset({u}), N, V)
-    return V
