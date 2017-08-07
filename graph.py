@@ -41,8 +41,8 @@ class DataGraph:
         row_nbrs = np.argwhere(relevant_row == True).flatten()
         return [{vertex, nbr} for nbr in column_nbrs + row_nbrs]
 
-    def _get_relevant_subgraph(self, simplex):
-        return {vr_simplex for vr_simplex in self.vr if simplex <= vr_simplex}
+    def _get_relevant_subcomplex(self, simplex):
+        return [vr_simplex for vr_simplex in self.vr if simplex <= vr_simplex]
 
     def _get_isomorphism_dict(self):
         # TODO: write get_localhom function
