@@ -1,5 +1,6 @@
 import numpy as np
 
+from helpers import get_boundary_operator
 
 class DataGraph:
 
@@ -10,6 +11,8 @@ class DataGraph:
         self.matrix = np.logical_and(distance_matrix <= epsilon, distance_matrix != 0)
         # take only upper triangle of the matrix for information not to repeat itself
         self.matrix = np.triu(self.matrix)
+        self.epsilon = epsilon
+        self.dim = dim
         self._get_vr_complex(dim)
         self.clusters = []
         
@@ -54,3 +57,7 @@ class DataGraph:
                 localhom_v = get_localhom(vertex)
                 localhom_e = get_localhom(edge)
                 isomorphism_dict[(vertex, edge)] = check_isomorphism(localhom_v, localhom_e)
+
+    def _get_localhom(self, simplex):
+        relevant_subcomplex = self._get_relevant_subcomplex(simplex)
+        operators = [get_boundary_operator(relevant_subcomplex, dim) for dim in range(self.dim)]
