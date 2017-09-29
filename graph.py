@@ -2,6 +2,7 @@ import numpy as np
 
 from helpers import get_boundary_operator
 
+
 class DataGraph:
 
     def __init__(self, distance_matrix, epsilon, dim):
