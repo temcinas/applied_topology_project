@@ -1,6 +1,6 @@
 import numpy as np
 
-from helpers import get_boundary_operator
+from helpers import get_boundary_operator, check_isomorphism, get_betti_numbers
 
 
 class DataGraph:
@@ -15,6 +15,7 @@ class DataGraph:
         self.epsilon = epsilon
         self.dim = dim
         self._get_vr_complex(dim)
+        self._isomorphism_dict = {}
         self.clusters = []
         
     def _get_vr_complex(self, dim):
@@ -49,16 +50,20 @@ class DataGraph:
         return [vr_simplex for vr_simplex in self.vr if simplex <= vr_simplex]
 
     def _get_isomorphism_dict(self):
-        # TODO: write get_localhom function
-        # TODO: write check_isomorphism function
         isomorphism_dict = {}
         for vertex in range(self.matrix.shape[0]):
             edges = self._get_edges(vertex)
             for edge in edges:
-                localhom_v = get_localhom(vertex)
-                localhom_e = get_localhom(edge)
+                localhom_v = self._get_localhom(vertex)
+                localhom_e = self._get_localhom(edge)
                 isomorphism_dict[(vertex, edge)] = check_isomorphism(localhom_v, localhom_e)
+        return isomorphism_dict
 
     def _get_localhom(self, simplex):
         relevant_subcomplex = self._get_relevant_subcomplex(simplex)
         operators = [get_boundary_operator(relevant_subcomplex, dim) for dim in range(self.dim)]
+        betti_numbers = get_betti_numbers(operators)
+        return betti_numbers
+
+    def cluster(self):
+        pass
