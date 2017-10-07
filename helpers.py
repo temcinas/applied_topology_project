@@ -1,6 +1,7 @@
 import numpy as np
 
 from collections import Counter
+from itertools import combinations
 from snf import Smith
 
 
@@ -38,7 +39,9 @@ def check_isomorphism(homology_groups1, homology_groups2):
 def get_betti_numbers(boundary_operators):
     betti_numbers = []
     prev_dim_kernel = 0
-    for operator in boundary_operators:
+    for i, operator in enumerate(boundary_operators):
+        print(i)
+        print(operator)
         snf = operator.tolist()
         Smith(snf)
         snf = np.array(snf) % 2  # for it to be over Z_2
@@ -51,6 +54,44 @@ def get_betti_numbers(boundary_operators):
         betti_numbers.append(prev_betti)
     betti_numbers.append(prev_dim_kernel) # last betti number is just last_kernel_dim - 0
     return betti_numbers
+
+
+def get_powerset(given_set):
+    # we don't include the empty set
+    pset = []
+    for n in range(len(given_set) + 1):
+        for sset in combinations(given_set, n):
+            if sset:
+                pset.append(set(sset))
+    return pset
+
+
+def fill_in_complex(simplex_list):
+    complex = []
+    for simplex in simplex_list:
+        powerset = get_powerset(simplex)
+        for sset in powerset:
+            if sset not in complex:
+                complex.append(sset)
+    return complex
+
+
+def get_node_nbrs(node, graph_matrix):
+    column = graph_matrix[:, node]
+    row = graph_matrix[node, :]
+    column_nbrs = np.argwhere(column == True).flatten()
+    row_nbrs = np.argwhere(row == True).flatten()
+    return np.concatenate((column_nbrs, row_nbrs))
+
+
+def visit_nbrs(node, graph_matrix, visited, cluster):
+    nbrs = get_node_nbrs(node, graph_matrix)
+    for nbr in nbrs:
+        if_visited = visited.get(nbr, False)
+        if not if_visited:
+            visited[nbr] = True
+            cluster.append(nbr)
+            visit_nbrs(nbr, graph_matrix, visited, cluster)
 
 
 def get_snf(matrix):

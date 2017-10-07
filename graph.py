@@ -1,6 +1,6 @@
 import numpy as np
 
-from helpers import get_boundary_operator, check_isomorphism, get_betti_numbers
+from helpers import get_boundary_operator, check_isomorphism, get_betti_numbers, fill_in_complex, get_node_nbrs, visit_nbrs
 
 
 class DataGraph:
@@ -40,30 +40,52 @@ class DataGraph:
             self._add_cofaces(dim, new_simplex, intersect)
 
     def _get_edges(self, vertex):
-        relevant_column = self.matrix[:, vertex]
-        relevant_row = self.matrix[vertex, :]
-        column_nbrs = np.argwhere(relevant_column == True).flatten()
-        row_nbrs = np.argwhere(relevant_row == True).flatten()
-        return [{vertex, nbr} for nbr in column_nbrs + row_nbrs]
+        nbrs = get_node_nbrs(vertex, self.matrix)
+        return [{vertex, nbr} for nbr in nbrs]
 
     def _get_relevant_subcomplex(self, simplex):
-        return [vr_simplex for vr_simplex in self.vr if simplex <= vr_simplex]
+        # TODO: fix bug here
+        relevant_simplices = [vr_simplex for vr_simplex in self.vr if simplex <= vr_simplex]
+        return fill_in_complex(relevant_simplices)
 
     def _get_isomorphism_dict(self):
         isomorphism_dict = {}
         for vertex in range(self.matrix.shape[0]):
             edges = self._get_edges(vertex)
             for edge in edges:
-                localhom_v = self._get_localhom(vertex)
+                print('vertices, edges')
+                print(vertex, edge)
+                localhom_v = self._get_localhom({vertex})
                 localhom_e = self._get_localhom(edge)
-                isomorphism_dict[(vertex, edge)] = check_isomorphism(localhom_v, localhom_e)
-        return isomorphism_dict
+                print('homologies:')
+                print(localhom_e)
+                print(localhom_v)
+                isomorphism_dict[(vertex, tuple(edge))] = check_isomorphism(localhom_v, localhom_e)
+        self._isomorphism_dict = isomorphism_dict
 
     def _get_localhom(self, simplex):
+        print('calculating local homology of {0}'.format(simplex))
         relevant_subcomplex = self._get_relevant_subcomplex(simplex)
+        print('subcomplex: {0}'.format(relevant_subcomplex))
         operators = [get_boundary_operator(relevant_subcomplex, dim) for dim in range(self.dim)]
         betti_numbers = get_betti_numbers(operators)
         return betti_numbers
 
     def cluster(self):
-        pass
+        # delete edges with 'false' and then just look for connected components
+        self._get_isomorphism_dict()
+        graph_matrix = np.copy(self.matrix)
+        for key, value in self._isomorphism_dict.items():
+            vertex, edge = key
+            if not value:
+                graph_matrix[edge] = False
+
+        visited = {}
+        for node in range(graph_matrix.shape[0]):
+            if_visited = visited.get(node, False)
+            if not if_visited:
+                visited[node] = True
+                cluster = [node]
+                visit_nbrs(node, graph_matrix, visited, cluster)
+            if cluster not in self.clusters:
+                self.clusters.append(cluster)
