@@ -53,20 +53,13 @@ class DataGraph:
         for vertex in range(self.matrix.shape[0]):
             edges = self._get_edges(vertex)
             for edge in edges:
-                print('vertices, edges')
-                print(vertex, edge)
                 localhom_v = self._get_localhom({vertex})
                 localhom_e = self._get_localhom(edge)
-                print('homologies:')
-                print(localhom_e)
-                print(localhom_v)
                 isomorphism_dict[(vertex, tuple(edge))] = check_isomorphism(localhom_v, localhom_e)
         self._isomorphism_dict = isomorphism_dict
 
     def _get_localhom(self, simplex):
-        print('calculating local homology of {0}'.format(simplex))
         relevant_subcomplex = self._get_relevant_subcomplex(simplex)
-        print('subcomplex: {0}'.format(relevant_subcomplex))
         operators = [get_boundary_operator(relevant_subcomplex, dim) for dim in range(self.dim)]
         betti_numbers = get_betti_numbers(operators)
         return betti_numbers

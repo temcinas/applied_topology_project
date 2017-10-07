@@ -40,8 +40,6 @@ def get_betti_numbers(boundary_operators):
     betti_numbers = []
     prev_dim_kernel = 0
     for i, operator in enumerate(boundary_operators):
-        print(i)
-        print(operator)
         snf = operator.tolist()
         Smith(snf)
         snf = np.array(snf) % 2  # for it to be over Z_2
