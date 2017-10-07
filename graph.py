@@ -80,5 +80,4 @@ class DataGraph:
                 visited[node] = True
                 cluster = [node]
                 visit_nbrs(node, graph_matrix, visited, cluster)
-            if cluster not in self.clusters:
                 self.clusters.append(cluster)
