@@ -3,7 +3,7 @@ import numpy as np
 from helpers import get_boundary_operator, check_isomorphism, get_betti_numbers, fill_in_complex, get_node_nbrs, visit_nbrs
 
 
-class DataGraph:
+class DataComplex:
 
     def __init__(self, distance_matrix, epsilon, dim):
         # self.vertices will be just range(self.matrix.shape[0])
@@ -44,7 +44,6 @@ class DataGraph:
         return [{vertex, nbr} for nbr in nbrs]
 
     def _get_relevant_subcomplex(self, simplex):
-        # TODO: fix bug here
         relevant_simplices = [vr_simplex for vr_simplex in self.vr if simplex <= vr_simplex]
         return fill_in_complex(relevant_simplices)
 
