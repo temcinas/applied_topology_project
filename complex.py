@@ -14,16 +14,16 @@ class DataComplex:
         self.matrix = np.triu(self.matrix)
         self.epsilon = epsilon
         self.dim = dim
-        self._get_vr_complex(dim)
+        self.vr = []
         self._isomorphism_dict = {}
         self.clusters = []
         
-    def _get_vr_complex(self, dim):
+    def build_vr_complex(self):
         # The incremental algorithm from https://pdfs.semanticscholar.org/e503/c24dcc7a8110a001ae653913ccd064c1044b.pdf
         self.vr = []
         for vertex in range(self.matrix.shape[0]):
             nbrs = self._lower_nbrs(vertex)
-            self._add_cofaces(dim, {vertex}, nbrs)
+            self._add_cofaces(self.dim, {vertex}, nbrs)
 
     def _lower_nbrs(self, vertex):
         # look at the column with index `vertex` and return row nums with non-zeros
@@ -52,12 +52,12 @@ class DataComplex:
         for vertex in range(self.matrix.shape[0]):
             edges = self._get_edges(vertex)
             for edge in edges:
-                localhom_v = self._get_localhom({vertex})
-                localhom_e = self._get_localhom(edge)
+                localhom_v = self.get_localhom({vertex})
+                localhom_e = self.get_localhom(edge)
                 isomorphism_dict[(vertex, tuple(edge))] = check_isomorphism(localhom_v, localhom_e)
         self._isomorphism_dict = isomorphism_dict
 
-    def _get_localhom(self, simplex):
+    def get_localhom(self, simplex):
         relevant_subcomplex = self._get_relevant_subcomplex(simplex)
         operators = [get_boundary_operator(relevant_subcomplex, dim) for dim in range(self.dim)]
         betti_numbers = get_betti_numbers(operators)

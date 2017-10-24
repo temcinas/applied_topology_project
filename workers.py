@@ -2,20 +2,20 @@ from complex import DataComplex
 
 
 class SimplexWorker:
-    # maybe this should be a factory rather than a class?
-    # then we could have different parameters (epsilon, dim) for different simplices
-    # also, maybe then we would not need to pass them to init?
+    # Class to calculate local homology of a simplex (I will use only for edges and vertices)
     workers = []
     epsilon = 0
     dimension = 0
-    parameters_are_set = False
     vertex_homologies = {}
 
-    def __init__(self, simplex, distance_matrix, *, simplex_dim, epsilon, dimension):
-        if not SimplexWorker.parameters_are_set:
-            SimplexWorker.epsilon = epsilon
-            SimplexWorker.dimension = dimension
-            SimplexWorker.parameters_are_set = True
+    @classmethod
+    def set_params(cls, *, epsilon, dimension):
+        cls.epsilon = epsilon
+        cls.dimension = dimension
+
+    def __init__(self, simplex, distance_matrix, *, simplex_dim):
+        if not SimplexWorker.epsilon or not SimplexWorker.dimension:
+            raise ValueError('both epsilon and dimension have to be non-zero, please set the params!')
 
         if simplex in SimplexWorker.workers:
             raise ValueError("worker for vertex {0} already created!".format(simplex))
@@ -30,10 +30,10 @@ class SimplexWorker:
         self.smp_dim = simplex_dim
 
     def start_calculation(self):
-        # potentially the worker could create a thread and here is where parallelism starts
+        # potentially the worker could create a thread and here is where parallelism would start
         self.active = True
-        # TODO: shoot off building of VR here rather than in DataComplex init
+        self.data_complex.build_vr_complex()
         simplex = set(range(self.smp_dim + 1))
-        betti_numbers = self.data_complex._get_localhom(simplex)
+        betti_numbers = self.data_complex.get_localhom(simplex)
         SimplexWorker.vertex_homologies[self.simplex] = betti_numbers
         self.active = False
