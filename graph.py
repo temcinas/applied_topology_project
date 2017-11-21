@@ -46,27 +46,36 @@ class DataGraph:
     def _get_relevant_subcomplex(self, simplex):
         # TODO: fix bug here
         relevant_simplices = [vr_simplex for vr_simplex in self.vr if simplex <= vr_simplex]
-        return fill_in_complex(relevant_simplices)
+        return relevant_simplices
+        # return fill_in_complex(relevant_simplices)
 
-    def _get_isomorphism_dict(self):
+    def _get_isomorphism_dict(self, report_homology):
         isomorphism_dict = {}
+        homology_dict = {}
         for vertex in range(self.matrix.shape[0]):
             edges = self._get_edges(vertex)
+            localhom_v = self._get_localhom({vertex})
             for edge in edges:
-                localhom_v = self._get_localhom({vertex})
                 localhom_e = self._get_localhom(edge)
                 isomorphism_dict[(vertex, tuple(edge))] = check_isomorphism(localhom_v, localhom_e)
+            if report_homology:
+                homology_dict[vertex] = localhom_v or [0]
         self._isomorphism_dict = isomorphism_dict
+        return homology_dict
 
     def _get_localhom(self, simplex):
         relevant_subcomplex = self._get_relevant_subcomplex(simplex)
+        # print(relevant_subcomplex)
         operators = [get_boundary_operator(relevant_subcomplex, dim) for dim in range(self.dim)]
+        # for i, operator in enumerate(operators):
+            # print(i, operator)
         betti_numbers = get_betti_numbers(operators)
         return betti_numbers
 
-    def cluster(self):
+    def cluster(self, report_homology=False):
         # delete edges with 'false' and then just look for connected components
-        self._get_isomorphism_dict()
+        homology_dict = self._get_isomorphism_dict(report_homology)
+        # print(homology_dict)
         graph_matrix = np.copy(self.matrix)
         for key, value in self._isomorphism_dict.items():
             vertex, edge = key
@@ -80,4 +89,7 @@ class DataGraph:
                 visited[node] = True
                 cluster = [node]
                 visit_nbrs(node, graph_matrix, visited, cluster)
-                self.clusters.append(cluster)
+                if report_homology:
+                    self.clusters.append((cluster, homology_dict.get(node, 'No hom')))
+                else:
+                    self.clusters.append(cluster)

@@ -1,6 +1,7 @@
 # Copy-paste from: http://blog.dlfer.xyz/post/2016-10-27-smith-normal-form/
 
 def dims(M):
+ # print(M)
  num_righe=len(M)
  num_colonne=len(M[0])
  return (num_righe,num_colonne)
