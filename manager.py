@@ -2,7 +2,6 @@ import numpy as np
 import math
 
 from random import sample
-from collections import deque
 
 from workers import VertexWorker
 
