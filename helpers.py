@@ -1,7 +1,7 @@
 import numpy as np
 
 from collections import Counter
-from snf import Smith
+from snf import put_in_snf
 
 
 def get_boundary_operator(simplicial_complex, k):
@@ -27,16 +27,14 @@ def get_betti_numbers(boundary_operators):
     betti_numbers = []
     prev_dim_kernel = 0
     for i, operator in enumerate(boundary_operators):
-        snf = operator.tolist()
-
-        if not snf:
+        if not operator:
             dim_kernel = 0
             dim_image = 0
         else:
-            Smith(snf)
-            snf = np.array(snf) % 2  # for it to be over Z_2
-            snf = np.transpose(snf)  # now we can iterate over columns
-            zero_counter = Counter([column.any() for column in snf])
+            put_in_snf(operator)
+            operator_mod2 = operator % 2  # for it to be over Z_2
+            operator_mod2 = np.transpose(operator_mod2)  # now we can iterate over columns
+            zero_counter = Counter([column.any() for column in operator_mod2])
             dim_image = zero_counter.get(True, 0)
             dim_kernel = zero_counter.get(False, 0)
 
