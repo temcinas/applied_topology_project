@@ -71,24 +71,6 @@ class DatasetManager:
             neighbours = self._get_neighbours(vertex_index)
             self._visit_vertex(vertex_index, neighbours)
 
-    # def calculate_homologies(self, k=100):
-    #     # TODO: think if we need this complicated thing, maybe just go through all vertices and that's it
-    #     last_k = deque([])
-    #     visited = set()
-    #     queue = deque([0])
-    #     while queue:
-    #         vertex_index = queue.popleft()
-    #         if vertex_index not in visited:
-    #             visited.add(vertex_index)
-    #             neighbours = self._get_neighbours(vertex_index)
-    #             self._visit_vertex(vertex_index, neighbours)
-    #
-    #             if len(last_k) > k:
-    #                 last_k.popleft()
-    #             last_k.append((vertex_index, neighbours))
-    #
-    #             queue.extend(neighbours)
-
     def cluster(self):
         # TODO: implement
         pass

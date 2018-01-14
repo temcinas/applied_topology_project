@@ -1,114 +1,111 @@
-# Copy-paste from: http://blog.dlfer.xyz/post/2016-10-27-smith-normal-form/
+# refactor from: http://blog.dlfer.xyz/post/2016-10-27-smith-normal-form/
 
-def dims(M):
- num_righe=len(M)
- num_colonne=len(M[0])
- return (num_righe,num_colonne)
+import numpy as np
 
-def MinAij(M,s):
- num_righe, num_colonne=dims(M)
- ijmin=[s,s]
- valmin=max( max([abs(x) for x in M[j][s:]]) for j in range(s,num_righe) )
- for i in (range(s,num_righe)):
-  for j in (range(s,num_colonne)):
-   if (M[i][j] != 0 ) and (abs(M[i][j]) <= valmin) :
-    ijmin = [i,j]
-    valmin = abs(M[i][j])
- return ijmin
 
-def IdentityMatrix(n):
- res=[[0 for j in range(n)] for i in range(n)]
- for i in range(n):
-  res[i][i] = 1
- return res
+def get_arg_absmin(matrix, s):
+    # finds the last entry which is minimal in absolute value and non-zero
+    matrix_abs = np.absolute(matrix[s:, s:])
+    masked = np.ma.masked_equal(matrix_abs, 0, copy=False)
+    index = np.argmin(np.flip(masked.flatten(), 0))
+    unraveled = np.unravel_index(masked.size - index - 1, masked.shape)
+    return np.array(unraveled) + np.array((s, s))
 
-def display(M):
- r=""
- for x in M:
-  r += "%s\n" % x
- return r +""
 
-def swap_rows(M,i,j):
- tmp=M[i]
- M[i]=M[j]
- M[j]=tmp
+def swap_rows(matrix, row1, row2):
+    matrix[row1], matrix[row2] = matrix[row2], matrix[row1].copy()
 
-def swap_columns(M,i,j):
- num_of_columns=len(M)
- for x in range(num_of_columns):
-  tmp=M[x][i]
-  M[x][i] = M[x][j]
-  M[x][j] = tmp
 
-def add_to_row(M,x,k,s):
- num_righe,num_colonne=dims(M)
- for tmpj in range(num_colonne):
-  M[x][tmpj] += k * M[s][tmpj]
+def swap_columns(matrix, col1, col2):
+    matrix[:, col1], matrix[:, col2] = matrix[:, col2], matrix[:, col1].copy()
 
-def add_to_column(M,x,k,s):
- num_righe,num_colonne=dims(M)
- for tmpj in range(num_righe):
-  M[tmpj][x] += k * M[tmpj][s]
 
-def change_sign_row(M,x):
- num_righe,num_colonne=dims(M)
- for tmpj in range(num_colonne):
-  M[x][tmpj] = - M[x][tmpj]
+def add_row_to_another(matrix, row1, row2, scaling_factor=1):
+    matrix[row1] += scaling_factor * matrix[row2]
 
-def change_sign_column(M,x):
- num_righe,num_colonne=dims(M)
- for tmpj in range(num_righe):
-  M[tmpj][x] = - M[tmpj][x]
 
-def is_lone(M,s):
- num_righe,num_colonne=dims(M)
- if [M[s][x] for x in range(s+1,num_colonne) if M[s][x] != 0] + [ M[y][s] for y in range(s+1,num_righe) if M[y][s] != 0] == []:
-  return True
- else:
-  return False
+def add_column_to_another(matrix, col1, col2, scaling_factor=1):
+    matrix[:, col1] += scaling_factor * matrix[:, col2]
 
-def get_nextentry(M,s):
-  # find and element which is not divisible by M[s][s]
-  num_righe,num_colonne=dims(M)
-  for x in range(s+1,num_righe):
-   for y in range(s+1,num_colonne):
-    if M[x][y] % M[s][s]  != 0:
-     return (x,y)
-  return None
 
-def Smith(M):
- num_righe,num_colonne=dims(M)
- L = IdentityMatrix(num_righe)
- R = IdentityMatrix(num_colonne)
- maxs=min(num_righe,num_colonne)
- for s in range(maxs):
-  # print ("step %s/%s\n" % (s+1,maxs))
-  # print "M:", display(M)
-  while not is_lone(M,s):
-   i,j = MinAij(M,s) # the non-zero entry with min |.|
-   swap_rows(M,s,i)
-   swap_rows(L,s,i)
-   swap_columns(M,s,j)
-   swap_columns(R,s,j)
-   for x in range(s+1,num_righe):
-    if M[x][s] != 0:
-     k = M[x][s] // M[s][s]
-     add_to_row(M,x,-k,s)
-     add_to_row(L,x,-k,s)
-   for x in range(s+1,num_colonne):
-    if M[s][x] != 0:
-     k = M[s][x] // M[s][s]
-     add_to_column(M,x,-k,s)
-     add_to_column(R,x,-k,s)
-   if is_lone(M,s):
-    res=get_nextentry(M,s)
-    if res:
-     x,y=res
-     add_to_row(M,s,1,x)
-     add_to_row(L,s,1,x)
-    else:
-     if M[s][s]<0:
-      change_sign_row(M,s)
-      change_sign_row(L,s)
- return L,R
+def change_row_sign(matrix, row):
+    matrix[row] = -matrix[row]
 
+
+def change_sign_column(matrix, column):
+    matrix[:, column] = -matrix[:, column]
+
+
+def is_lone(matrix, s):
+    temp_1 = np.argwhere(matrix[s:s + 1, s + 1:] != 0)
+    temp_2 = np.argwhere(matrix[s+1:, s:s+1] != 0)
+    return not bool(temp_1.size + temp_2.size)
+
+
+def get_nextentry(matrix, s):
+    # find and element which is not divisible by matrix[s][s]
+    indexes = np.argwhere(matrix[s + 1:, s + 1:] % matrix[s][s] != 0)
+    if not indexes.size:
+        return None
+    i_row, i_col = indexes[0]
+    return i_row + s + 1, i_col + s + 1
+
+
+def put_in_snf(matrix):
+    # puts matrix in Smith Normal Form
+    n_rows, n_columns = matrix.shape
+    for s in range(min(matrix.shape)):
+        while not is_lone(matrix, s):
+            row, col = get_arg_absmin(matrix, s)  # the non-zero entry with min |.|
+            swap_rows(matrix, s, row)
+            swap_columns(matrix, s, col)
+            for x_row in range(s + 1, n_rows):
+                if matrix[x_row][s]:
+                    k = matrix[x_row][s] // matrix[s][s]
+                    add_row_to_another(matrix, x_row, s, scaling_factor=-k)
+            for x_col in range(s + 1, n_columns):
+                if matrix[s][x_col]:
+                    k = matrix[s][x_col] // matrix[s][s]
+                    add_column_to_another(matrix, x_col, s, scaling_factor=-k)
+            if is_lone(matrix, s):
+                res = get_nextentry(matrix, s)
+                if res:
+                    x_row, _ = res
+                    add_row_to_another(matrix, s, x_row)
+                elif matrix[s][s] < 0:
+                    change_row_sign(matrix, s)
+
+
+def get_snf(matrix):
+    # puts matrix in Smith Normal Form and returns left_matrix, right_matrix
+    n_rows, n_columns = matrix.shape
+    left_matrix = np.identity(n_rows)
+    right_matrix = np.identity(n_columns)
+    for s in range(min(matrix.shape)):
+        while not is_lone(matrix, s):
+            row, col = get_arg_absmin(matrix, s)  # the non-zero entry with min |.|
+            swap_rows(matrix, s, row)
+            swap_rows(left_matrix, s, row)
+            swap_columns(matrix, s, col)
+            swap_columns(right_matrix, s, col)
+            for x_row in range(s + 1, n_rows):
+                if matrix[x_row][s]:
+                    k = matrix[x_row][s] // matrix[s][s]
+                    add_row_to_another(matrix, x_row, s, scaling_factor=-k)
+                    add_row_to_another(left_matrix, x_row, s, scaling_factor=-k)
+            for x_col in range(s + 1, n_columns):
+                if matrix[s][x_col]:
+                    k = matrix[s][x_col] // matrix[s][s]
+                    add_column_to_another(matrix, x_col, s, scaling_factor=-k)
+                    add_column_to_another(right_matrix, x_col, s, scaling_factor=-k)
+            if is_lone(matrix, s):
+                res = get_nextentry(matrix, s)
+                if res:
+                    x_row, _ = res
+                    add_row_to_another(matrix, s, x_row)
+                    add_row_to_another(left_matrix, s, x_row)
+                else:
+                    if matrix[s][s] < 0:
+                        change_row_sign(matrix, s)
+                        change_row_sign(left_matrix, s)
+    return left_matrix, right_matrix
