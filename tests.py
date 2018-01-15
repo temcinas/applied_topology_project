@@ -65,6 +65,10 @@ class TestHomology(unittest.TestCase):
         for homology in worker.edge_homologies.values():
             self.assertEqual(homology, [0, 0, 0, 0], msg='tetrahedron edge homology is not correct')
 
+        manager.cluster()
+        single_cluster = manager.clusters[0]
+        self.assertEqual(set(single_cluster), set(range(4)), msg='tetrahedron clustering is not correct')
+
     def test_three_sheets(self):
         manager = DatasetManager(vertex_iter=iter(TestHomology.points2),
                                  centers_num=lambda x: int(math.sqrt(x)),
@@ -81,6 +85,10 @@ class TestHomology(unittest.TestCase):
             if not edge == special:
                 self.assertEqual(homology, [0, 0, 0], msg='3-sheet edge homology is not correct')
         self.assertEqual(worker.edge_homologies[special], [0, 0, 2], msg='3-sheet edge homology is not correct')
+
+        manager.cluster()
+        single_cluster = manager.clusters[0]
+        self.assertEqual(set(single_cluster), set(range(5)), msg='3-sheet clustering is not correct')
 
 if __name__ == '__main__':
     unittest.main()

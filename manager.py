@@ -2,6 +2,7 @@ import numpy as np
 import math
 
 from random import sample
+from collections import defaultdict
 
 from workers import VertexWorker
 
@@ -16,10 +17,12 @@ class DatasetManager:
 
         self.vertices = np.array(list(vertex_iter))
         self.distance = distance_funct
+        self.clusters = []
 
         num_vertices = len(self.vertices)
         self.center_indexes = sample(range(num_vertices), centers_num(num_vertices))
         self.dist_to_centers = {}
+
         self.epsilon = epsilon
         self.space_dimension = space_dimension or len(self.vertices[0])
 
@@ -76,6 +79,40 @@ class DatasetManager:
             self._visit_vertex(vertex_index, neighbours)
         return VertexWorker
 
-    def cluster(self):
-        # TODO: implement
-        pass
+    @staticmethod
+    def _get_cluster_adjacency_dict(vertex_homologies, edge_homologies):
+        adjacency_dict = defaultdict(list)
+        for (vertex1, vertex2), homology in edge_homologies.items():
+            if vertex_homologies[vertex1] == homology and vertex_homologies[vertex2] == homology:
+                adjacency_dict[vertex1].append(vertex2)
+                adjacency_dict[vertex2].append(vertex1)
+        return adjacency_dict
+
+    def _visit_neighbours(self, vertex, cluster, adjacency_dict, visited):
+        neighbours = adjacency_dict[vertex]
+        for neighbour in neighbours:
+            if neighbour not in visited:
+                visited.add(neighbour)
+                cluster.append(neighbour)
+                self._visit_neighbours(neighbour, cluster, adjacency_dict, visited)
+
+    def cluster(self, report_homologies=False):
+        vertex_homologies, edge_homologies = VertexWorker.vertex_homologies, VertexWorker.edge_homologies
+        if not vertex_homologies or not edge_homologies:
+            raise ValueError('no homology groups have been calculated, use DatasetManager.calculate_homologies()')
+
+        adjacency_dict = self._get_cluster_adjacency_dict(vertex_homologies, edge_homologies)
+        visited = set()
+        for vertex, neighbours in adjacency_dict.items():
+            if vertex not in visited:
+                visited.add(vertex)
+                cluster = [vertex]
+                self._visit_neighbours(vertex, cluster, adjacency_dict, visited)
+                self.clusters.append(cluster)
+
+        if report_homologies:
+            new_clusters = []
+            for cluster in self.clusters:
+                homology = vertex_homologies[cluster[0]]
+                new_clusters.append((cluster, homology))
+            self.clusters = new_clusters
