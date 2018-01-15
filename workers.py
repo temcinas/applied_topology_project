@@ -14,6 +14,14 @@ class VertexWorker:
         cls.epsilon = epsilon
         cls.space_dimension = dimension
 
+    @classmethod
+    def clear_params(cls):
+        cls.workers = []
+        cls.epsilon = 0
+        cls.space_dimension = 0
+        cls.vertex_homologies = {}
+        cls.edge_homologies = {}
+
     def __init__(self, vertex_id, distance_matrix, neighbours):
         # Distance_matrix - matrix of pairwise distances
         # Neighbours - ids of neighbours, 0th position is the vertex itself

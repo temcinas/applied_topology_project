@@ -1,4 +1,6 @@
 # refactor from: http://blog.dlfer.xyz/post/2016-10-27-smith-normal-form/
+# this contains a bug (coming from the original code) which seemingly does not affect mod 2 SNF
+# look for an example here: https://uk.mathworks.com/help/symbolic/mupad_ref/linalg-smithform.html
 
 import numpy as np
 

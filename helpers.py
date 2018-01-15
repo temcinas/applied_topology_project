@@ -27,7 +27,7 @@ def get_betti_numbers(boundary_operators):
     betti_numbers = []
     prev_dim_kernel = 0
     for i, operator in enumerate(boundary_operators):
-        if not operator:
+        if not operator.size:
             dim_kernel = 0
             dim_image = 0
         else:

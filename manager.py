@@ -7,25 +7,29 @@ from workers import VertexWorker
 
 
 class DatasetManager:
-    def __init__(self, vertex_iter, centers_num, distance_funct, epsilon):
+    def __init__(self, vertex_iter, centers_num, distance_funct, epsilon, space_dimension=None):
         # entry point of the API
         # vertex_iter - iterator of vertices themselves (i.e. vectors)
         # centers_num - function taking int (no of vertices) and returning an int - number of centers
         # distance_funct - a function that takes two vectors and returns distance between them
         # epsilon - threshold parameter
 
-        self.vertices = np.array(vertex_iter)
+        self.vertices = np.array(list(vertex_iter))
         self.distance = distance_funct
 
         num_vertices = len(self.vertices)
         self.center_indexes = sample(range(num_vertices), centers_num(num_vertices))
         self.dist_to_centers = {}
         self.epsilon = epsilon
+        self.space_dimension = space_dimension or len(self.vertices[0])
+
+        VertexWorker.clear_params()
+        VertexWorker.set_params(epsilon=self.epsilon, dimension=self.space_dimension)
 
     def get_centers_ready(self):
         for center_index in self.center_indexes:
             center = self.vertices[center_index]
-            distances = sorted([(self.distance(center, vertex), vertex) for vertex in self.vertices])
+            distances = sorted([(self.distance(center, vertex), i) for i, vertex in enumerate(self.vertices)])
             self.dist_to_centers[center_index] = np.array(distances)
 
     def _get_closest_center(self, vertex_index):
@@ -48,16 +52,16 @@ class DatasetManager:
         relevant_vertices = np.argwhere(relevant_distances[:, :1] <= smallest_distance_to_center + self.epsilon)
         neighbours = [vertex_index]
         for vertex_coord in relevant_vertices:
-            potential_nbr_id = relevant_distances[vertex_coord[0], 1]
+            potential_nbr_id = int(relevant_distances[vertex_coord[0], 1])
             if self.distance(vertex, self.vertices[potential_nbr_id]) <= self.epsilon and not potential_nbr_id == vertex_index:
                 neighbours.append(potential_nbr_id)
-
         return neighbours
 
     def _get_distance_matrix(self, neighbours):
         matrix = []
         for x in neighbours:
-            row = [self.distance(x, y) for y in neighbours]
+            x = self.vertices[x]
+            row = [self.distance(x, self.vertices[y]) for y in neighbours]
             matrix.append(row)
         return np.array(matrix)
 
@@ -70,6 +74,7 @@ class DatasetManager:
         for vertex_index, vertex in enumerate(self.vertices):
             neighbours = self._get_neighbours(vertex_index)
             self._visit_vertex(vertex_index, neighbours)
+        return VertexWorker
 
     def cluster(self):
         # TODO: implement
