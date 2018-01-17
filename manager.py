@@ -73,7 +73,7 @@ class DatasetManager:
         worker = VertexWorker(vertex_index, distance_matrix, neighbours)
         worker.start_calculation()
 
-    def calulate_homologies(self):
+    def calculate_homologies(self):
         for vertex_index, vertex in enumerate(self.vertices):
             neighbours = self._get_neighbours(vertex_index)
             self._visit_vertex(vertex_index, neighbours)
@@ -86,13 +86,21 @@ class DatasetManager:
             if vertex_homologies[vertex1] == homology and vertex_homologies[vertex2] == homology:
                 adjacency_dict[vertex1].append(vertex2)
                 adjacency_dict[vertex2].append(vertex1)
+
+        for vertex in vertex_homologies.keys():
+            if vertex not in adjacency_dict.keys():
+                adjacency_dict[vertex] = []
         return adjacency_dict
 
     def _visit_neighbours(self, vertex, cluster, adjacency_dict, visited):
+        # print(visited)
         neighbours = adjacency_dict[vertex]
         for neighbour in neighbours:
+            # if_visited = visited.get(neighbour, False)
+            # if not if_visited:
             if neighbour not in visited:
                 visited.add(neighbour)
+                # visited[neighbour] = True
                 cluster.append(neighbour)
                 self._visit_neighbours(neighbour, cluster, adjacency_dict, visited)
 
@@ -102,10 +110,15 @@ class DatasetManager:
             raise ValueError('no homology groups have been calculated, use DatasetManager.calculate_homologies()')
 
         adjacency_dict = self._get_cluster_adjacency_dict(vertex_homologies, edge_homologies)
+        # print(adjacency_dict)
+        # visited = {}
         visited = set()
         for vertex, neighbours in adjacency_dict.items():
+            # if_visited = visited.get(vertex, False)
+            # if not if_visited:
             if vertex not in visited:
                 visited.add(vertex)
+                # visited[vertex] = True
                 cluster = [vertex]
                 self._visit_neighbours(vertex, cluster, adjacency_dict, visited)
                 self.clusters.append(cluster)

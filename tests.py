@@ -57,7 +57,7 @@ class TestHomology(unittest.TestCase):
                                  distance_funct=lambda x, y: np.linalg.norm(x-y),
                                  epsilon=3)
         manager.get_centers_ready()
-        worker = manager.calulate_homologies()
+        worker = manager.calculate_homologies()
 
         for homology in worker.vertex_homologies.values():
             self.assertEqual(homology, [0, 0, 0, 0], msg='tetrahedron vertex homology is not correct')
@@ -75,7 +75,7 @@ class TestHomology(unittest.TestCase):
                                  distance_funct=lambda x, y: np.linalg.norm(x - y),
                                  epsilon=1)
         manager.get_centers_ready()
-        worker = manager.calulate_homologies()
+        worker = manager.calculate_homologies()
 
         for homology in worker.vertex_homologies.values():
             self.assertEqual(homology, [0, 0, 0], msg='3-sheet vertex homology is not correct')
