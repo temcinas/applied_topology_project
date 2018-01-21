@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import math
 
-from snf import get_arg_absmin, put_in_snf, get_snf, reduce_matrix
+from snf import get_arg_absmin, put_in_snf, get_snf, reduce_matrix, reduce_matrix_iter
 from manager import DatasetManager
 
 
@@ -54,6 +54,26 @@ class TestSnf(unittest.TestCase):
             matrix, _, _ = reduce_matrix(matrix)
             bool_arr.append(np.array_equal(matrix, matrix2 % 2))
         self.assertTrue(np.array(bool_arr).all(), msg='reduce_matrix and put_in_snf are inconsistent')
+
+    def test_snf_mod2_iter(self):
+        bool_arr = []
+        for i in range(20):
+            matrix = np.random.randint(0, 1, size=(25, 15))
+            matrix2 = matrix.copy()
+            put_in_snf(matrix2)
+            matrix, _, _ = reduce_matrix_iter(matrix)
+            bool_arr.append(np.array_equal(matrix, matrix2 % 2))
+        self.assertTrue(np.array(bool_arr).all(), msg='reduce_matrix_iter and put_in_snf are inconsistent')
+
+        bool_arr = []
+        for i in range(20):
+            matrix = np.random.randint(0, 1, size=(25, 15))
+            matrix2 = matrix.copy()
+            matrix2, rank2, _ = reduce_matrix(matrix2)
+            matrix, rank, _ = reduce_matrix_iter(matrix)
+            bool_arr.append(np.array_equal(matrix, matrix2))
+            bool_arr.append(np.array_equal(rank2, rank))
+        self.assertTrue(np.array(bool_arr).all(), msg='reduce_matrix_iter and reduce_matrix are inconsistent')
 
 
 class TestHomology(unittest.TestCase):

@@ -1,6 +1,6 @@
 import numpy as np
 
-from snf import reduce_matrix
+from snf import reduce_matrix_iter
 
 
 def get_boundary_operator(simplicial_complex, k):
@@ -26,7 +26,7 @@ def get_betti_numbers(boundary_operators):
     betti_numbers = []
     prev_dim_kernel = 0
     for i, operator in enumerate(boundary_operators):
-        _, dim_image, dim_kernel = reduce_matrix(operator)
+        _, dim_image, dim_kernel = reduce_matrix_iter(operator)
 
         prev_betti = prev_dim_kernel - dim_image
         if prev_betti < 0:

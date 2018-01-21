@@ -155,3 +155,43 @@ def reduce_matrix(matrix):
 
     rank = _reduce(0)
     return matrix, rank, n - rank
+
+
+def reduce_matrix_iter(matrix):
+    # taken from: https://triangleinequality.wordpress.com/2014/01/23/computing-homology/
+    if not matrix.size:
+        return matrix, 0, 0
+    m = matrix.shape[0]
+    n = matrix.shape[1]
+
+    def _reduce():
+        # We recurse through the diagonal entries.
+        # We move a 1 to the diagonal entry, then
+        # knock out any other 1s in the same  col/row.
+        # The rank is the number of nonzero pivots,
+        # so when we run out of nonzero diagonal entries, we will
+        # know the rank.
+        for diag in range(m+1):
+            nonzero = False
+            for i in range(diag, m):
+                for j in range(diag, n):
+                    if matrix[i, j]:
+                        matrix[[diag, i], :] = matrix[[i, diag], :]
+                        matrix[:, [diag, j]] = matrix[:, [j, diag]]
+                        nonzero = True
+                        break
+                if nonzero:
+                    break
+            if nonzero:
+                for i in range(diag + 1, m):
+                    if matrix[i, diag]:
+                        matrix[i, :] = np.logical_xor(matrix[diag, :], matrix[i, :])
+                for i in range(diag + 1, n):
+                    if matrix[diag, i]:
+                        matrix[:, i] = np.logical_xor(matrix[:, diag], matrix[:, i])
+                continue
+            else:
+                return diag
+
+    rank = _reduce()
+    return matrix, rank, n - rank
