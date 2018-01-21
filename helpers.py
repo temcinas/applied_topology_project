@@ -1,9 +1,6 @@
 import numpy as np
 
-from collections import Counter
 from snf import reduce_matrix
-
-from datetime import datetime
 
 
 def get_boundary_operator(simplicial_complex, k):
@@ -29,16 +26,7 @@ def get_betti_numbers(boundary_operators):
     betti_numbers = []
     prev_dim_kernel = 0
     for i, operator in enumerate(boundary_operators):
-
-        # print('starting SNF operator {0} shape {1} {2}'.format(i, operator.shape, datetime.now())) if i < 11 else None
         _, dim_image, dim_kernel = reduce_matrix(operator)
-        # print('Have SNF {0}'.format(datetime.now())) if i < 11 else None
-        # operator_mod2 = operator % 2  # for it to be over Z_2
-        # operator_mod2 = np.transpose(operator_mod2)  # now we can iterate over columns
-        # zero_counter = Counter([column.any() for column in operator_mod2])
-        # dim_image = zero_counter.get(True, 0)
-        # dim_kernel = zero_counter.get(False, 0)
-        # print('Have betti {0}'.format(datetime.now()))
 
         prev_betti = prev_dim_kernel - dim_image
         if prev_betti < 0:

@@ -2,8 +2,6 @@ import numpy as np
 
 from helpers import get_boundary_operator, get_betti_numbers, get_node_nbrs
 
-from datetime import datetime
-
 
 class VietorisRipsComplex:
 
@@ -48,10 +46,6 @@ class VietorisRipsComplex:
 
     def get_localhom(self, simplex):
         relevant_subcomplex = self._get_relevant_subcomplex(simplex)
-        # print('have subcomplex {0}'.format(datetime.now()))
         operators = [get_boundary_operator(relevant_subcomplex, dim) for dim in range(self.dim)]
-        # print('have {0} operators {1}'.format(len(operators), datetime.now()))
         betti_numbers = get_betti_numbers(operators)
-        # print('have betti numbers {0}'.format(datetime.now()))
-        print(betti_numbers[:20])
         return betti_numbers

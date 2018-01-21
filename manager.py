@@ -8,8 +8,6 @@ from workers import VertexWorker
 from complex import VietorisRipsComplex
 from helpers import get_boundary_operator
 
-from datetime import datetime
-
 
 class DatasetManager:
     def __init__(self, vertices, centers_num, distance_funct, epsilon, space_dimension=None):
@@ -79,7 +77,6 @@ class DatasetManager:
 
     def calculate_homologies(self):
         for vertex_index, vertex in enumerate(self.vertices):
-            # print('Vertex {0} visiting started {1}'.format(vertex_index, datetime.now()))
             neighbours = self._get_neighbours(vertex_index)
             self._visit_vertex(vertex_index, neighbours)
         return VertexWorker
@@ -98,14 +95,10 @@ class DatasetManager:
         return adjacency_dict
 
     def _visit_neighbours(self, vertex, cluster, adjacency_dict, visited):
-        # print(visited)
         neighbours = adjacency_dict[vertex]
         for neighbour in neighbours:
-            # if_visited = visited.get(neighbour, False)
-            # if not if_visited:
             if neighbour not in visited:
                 visited.add(neighbour)
-                # visited[neighbour] = True
                 cluster.append(neighbour)
                 self._visit_neighbours(neighbour, cluster, adjacency_dict, visited)
 
@@ -115,15 +108,10 @@ class DatasetManager:
             raise ValueError('no homology groups have been calculated, use DatasetManager.calculate_homologies()')
 
         adjacency_dict = self._get_cluster_adjacency_dict(vertex_homologies, edge_homologies)
-        # print(adjacency_dict)
-        # visited = {}
         visited = set()
         for vertex, neighbours in adjacency_dict.items():
-            # if_visited = visited.get(vertex, False)
-            # if not if_visited:
             if vertex not in visited:
                 visited.add(vertex)
-                # visited[vertex] = True
                 cluster = [vertex]
                 self._visit_neighbours(vertex, cluster, adjacency_dict, visited)
                 self.clusters.append(cluster)
