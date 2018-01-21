@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import math
 
-from snf import get_arg_absmin, put_in_snf, get_snf
+from snf import get_arg_absmin, put_in_snf, get_snf, reduce_matrix
 from manager import DatasetManager
 
 
@@ -45,6 +45,16 @@ class TestSnf(unittest.TestCase):
                                    [0, 0, 0, 0, 2520]])
         self.assertTrue((matrix == correct_result).all(), msg="get_snf function in SNF has failed.")
 
+    def test_snf_mod2(self):
+        bool_arr = []
+        for i in range(20):
+            matrix = np.random.randint(0, 1, size=(25, 15))
+            matrix2 = matrix.copy()
+            put_in_snf(matrix2)
+            matrix, _, _ = reduce_matrix(matrix)
+            bool_arr.append(np.array_equal(matrix, matrix2 % 2))
+        self.assertTrue(np.array(bool_arr).all(), msg='reduce_matrix and put_in_snf are inconsistent')
+
 
 class TestHomology(unittest.TestCase):
     points1 = [np.array([0, 0, 1, 0]), np.array([1, 0, 1, 0]), np.array([1, 0, 0, 0]), np.array([0, 1, 0, 0])]
@@ -52,7 +62,7 @@ class TestHomology(unittest.TestCase):
                np.array([-math.sqrt(3)/2, 1/2, 0]), np.array([0, 1/2, -math.sqrt(3)/2])]
 
     def test_terahedron(self):
-        manager = DatasetManager(vertex_iter=iter(TestHomology.points1),
+        manager = DatasetManager(vertices=TestHomology.points1,
                                  centers_num=lambda x: int(math.sqrt(x)),
                                  distance_funct=lambda x, y: np.linalg.norm(x-y),
                                  epsilon=3)
@@ -70,7 +80,7 @@ class TestHomology(unittest.TestCase):
         self.assertEqual(set(single_cluster), set(range(4)), msg='tetrahedron clustering is not correct')
 
     def test_three_sheets(self):
-        manager = DatasetManager(vertex_iter=iter(TestHomology.points2),
+        manager = DatasetManager(vertices=TestHomology.points2,
                                  centers_num=lambda x: int(math.sqrt(x)),
                                  distance_funct=lambda x, y: np.linalg.norm(x - y),
                                  epsilon=1)

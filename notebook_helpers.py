@@ -5,6 +5,7 @@ import plotly
 import plotly.plotly as py
 import plotly.graph_objs as go
 import math
+import numpy as np
 
 GOOD_TYPES = ['word2vec', 'glove']
 GOOD_DISTANCES = ['euclidean', 'arccos']
@@ -32,10 +33,10 @@ def get_wordvec(word, model, model_type):
         return model(word).vector
 
 
-def produce_data(df, vertex_iter, distance_funct, start, end, step):
+def produce_data(df, vertices, distance_funct, start, end, step):
     cluster_list = []
-    for epsilon in range(start, end, step):
-        manager = DatasetManager(vertex_iter=vertex_iter,
+    for epsilon in np.arange(start, end, step):
+        manager = DatasetManager(vertices=vertices,
                                  centers_num=lambda x: int(math.sqrt(x)),
                                  distance_funct=distance_funct,
                                  epsilon=epsilon)

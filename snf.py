@@ -54,9 +54,12 @@ def get_nextentry(matrix, s):
 
 
 def put_in_snf(matrix):
+    # TODO: deal with maxint problem
     # puts matrix in Smith Normal Form
     n_rows, n_columns = matrix.shape
+    # np.savetxt('shit_matrix.txt', matrix)
     for s in range(min(matrix.shape)):
+        # print('Start cycle {0}'.format(s))
         while not is_lone(matrix, s):
             row, col = get_arg_absmin(matrix, s)  # the non-zero entry with min |.|
             swap_rows(matrix, s, row)
@@ -76,9 +79,11 @@ def put_in_snf(matrix):
                     add_row_to_another(matrix, s, x_row)
                 elif matrix[s][s] < 0:
                     change_row_sign(matrix, s)
+        # print('end cycle')
 
 
 def get_snf(matrix):
+    # TODO: deal with maxint problem
     # puts matrix in Smith Normal Form and returns left_matrix, right_matrix
     n_rows, n_columns = matrix.shape
     left_matrix = np.identity(n_rows)
@@ -111,3 +116,42 @@ def get_snf(matrix):
                         change_row_sign(matrix, s)
                         change_row_sign(left_matrix, s)
     return left_matrix, right_matrix
+
+
+def reduce_matrix(matrix):
+    # taken from: https://triangleinequality.wordpress.com/2014/01/23/computing-homology/
+    if not matrix.size:
+        return matrix, 0, 0
+    m = matrix.shape[0]
+    n = matrix.shape[1]
+
+    def _reduce(x):
+        # We recurse through the digonal entries.
+        # We move a 1 to the diagonal entry, then
+        # knock out any other 1s in the same  col/row.
+        # The rank is the number of nonzero pivots,
+        # so when we run out of nonzero diagonal entries, we will
+        # know the rank.
+        nonzero = False
+        for i in range(x, m):
+            for j in range(x, n):
+                if matrix[i, j]:
+                    matrix[[x, i], :] = matrix[[i, x], :]
+                    matrix[:, [x, j]] = matrix[:, [j, x]]
+                    nonzero = True
+                    break
+            if nonzero:
+                break
+        if nonzero:
+            for i in range(x + 1, m):
+                if matrix[i, x]:
+                    matrix[i, :] = np.logical_xor(matrix[x, :], matrix[i, :])
+            for i in range(x + 1, n):
+                if matrix[x, i]:
+                    matrix[:, i] = np.logical_xor(matrix[:, x], matrix[:, i])
+            return _reduce(x + 1)
+        else:
+            return x
+
+    rank = _reduce(0)
+    return matrix, rank, n - rank
