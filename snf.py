@@ -57,9 +57,7 @@ def put_in_snf(matrix):
     # TODO: deal with maxint problem
     # puts matrix in Smith Normal Form
     n_rows, n_columns = matrix.shape
-    # np.savetxt('shit_matrix.txt', matrix)
     for s in range(min(matrix.shape)):
-        # print('Start cycle {0}'.format(s))
         while not is_lone(matrix, s):
             row, col = get_arg_absmin(matrix, s)  # the non-zero entry with min |.|
             swap_rows(matrix, s, row)
@@ -79,7 +77,6 @@ def put_in_snf(matrix):
                     add_row_to_another(matrix, s, x_row)
                 elif matrix[s][s] < 0:
                     change_row_sign(matrix, s)
-        # print('end cycle')
 
 
 def get_snf(matrix):

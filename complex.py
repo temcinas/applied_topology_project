@@ -41,11 +41,11 @@ class VietorisRipsComplex:
         nbrs = get_node_nbrs(vertex, self.matrix)
         return [{vertex, nbr} for nbr in nbrs]
 
-    def _get_relevant_subcomplex(self, simplex):
+    def get_relevant_subcomplex(self, simplex):
         return [vr_simplex for vr_simplex in self.vr if simplex <= vr_simplex]
 
     def get_localhom(self, simplex):
-        relevant_subcomplex = self._get_relevant_subcomplex(simplex)
+        relevant_subcomplex = self.get_relevant_subcomplex(simplex)
         operators = [get_boundary_operator(relevant_subcomplex, dim) for dim in range(self.dim)]
         betti_numbers = get_betti_numbers(operators)
         return betti_numbers

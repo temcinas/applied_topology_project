@@ -1,5 +1,5 @@
 import numpy as np
-import math
+import multiprocessing as mp
 
 from random import sample
 from collections import defaultdict, Counter
@@ -10,7 +10,7 @@ from helpers import get_boundary_operator
 
 
 class DatasetManager:
-    def __init__(self, vertices, centers_num, distance_funct, epsilon, space_dimension=None):
+    def __init__(self, vertices, centers_num, distance_funct, epsilon, space_dimension=None, n_processes=4):
         # entry point of the API
         # vertex_iter - iterator of vertices themselves (i.e. vectors)
         # centers_num - function taking int (no of vertices) and returning an int - number of centers
@@ -20,8 +20,14 @@ class DatasetManager:
         self.vertices = np.array(vertices)
         self.distance = distance_funct
         self.clusters = []
+        self.n_processes = n_processes
 
         num_vertices = len(self.vertices)
+
+        self.pool = mp.Queue()
+        for i in range(num_vertices):
+            self.pool.put(i)
+
         self.center_indexes = sample(range(num_vertices), centers_num(num_vertices))
         self.dist_to_centers = {}
 
@@ -29,56 +35,34 @@ class DatasetManager:
         self.space_dimension = space_dimension or len(self.vertices[0])
 
         VertexWorker.clear_params()
-        VertexWorker.set_params(epsilon=self.epsilon, dimension=self.space_dimension)
+        VertexWorker.set_params(epsilon=self.epsilon,
+                                dimension=self.space_dimension,
+                                vertices=self.vertices,
+                                dist_funct=distance_funct)
 
     def get_centers_ready(self):
+        dist_to_centers = {}
         for center_index in self.center_indexes:
             center = self.vertices[center_index]
             distances = sorted([(self.distance(center, vertex), i) for i, vertex in enumerate(self.vertices)])
-            self.dist_to_centers[center_index] = np.array(distances)
+            dist_to_centers[center_index] = np.array(distances)
+        VertexWorker.dist_to_centers = dist_to_centers
 
-    def _get_closest_center(self, vertex_index):
-        smallest_distance_to_center = math.inf
-        relevant_center_id = None
-
-        for center_id, distances in self.dist_to_centers.items():
-            vertex_position = np.argwhere(distances[:, 1:] == vertex_index).flatten()[0]
-            distance_to_center = distances[vertex_position][0]
-            if distance_to_center < smallest_distance_to_center:
-                smallest_distance_to_center = distance_to_center
-                relevant_center_id = center_id
-        return smallest_distance_to_center, relevant_center_id
-
-    def _get_neighbours(self, vertex_index):
-        vertex = self.vertices[vertex_index]
-        smallest_distance_to_center, relevant_center_id = self._get_closest_center(vertex_index)
-
-        relevant_distances = self.dist_to_centers[relevant_center_id]
-        relevant_vertices = np.argwhere(relevant_distances[:, :1] <= smallest_distance_to_center + self.epsilon)
-        neighbours = [vertex_index]
-        for vertex_coord in relevant_vertices:
-            potential_nbr_id = int(relevant_distances[vertex_coord[0], 1])
-            if self.distance(vertex, self.vertices[potential_nbr_id]) <= self.epsilon and not potential_nbr_id == vertex_index:
-                neighbours.append(potential_nbr_id)
-        return neighbours
-
-    def _get_distance_matrix(self, neighbours):
-        matrix = []
-        for x in neighbours:
-            x = self.vertices[x]
-            row = [self.distance(x, self.vertices[y]) for y in neighbours]
-            matrix.append(row)
-        return np.array(matrix)
-
-    def _visit_vertex(self, vertex_index, neighbours):
-        distance_matrix = self._get_distance_matrix(neighbours)
-        worker = VertexWorker(vertex_index, distance_matrix, neighbours)
-        worker.start_calculation()
+    def process_funct(self):
+        while not self.pool.empty():
+            vertex_id = self.pool.get()
+            worker = VertexWorker(vertex_id=vertex_id)
+            worker.start_calculation()
 
     def calculate_homologies(self):
-        for vertex_index, vertex in enumerate(self.vertices):
-            neighbours = self._get_neighbours(vertex_index)
-            self._visit_vertex(vertex_index, neighbours)
+        processes = []
+        for p in range(self.n_processes):
+            process = mp.Process(target=self.process_funct)
+            process.start()
+            processes.append(process)
+
+        for process in processes:
+            process.join()
         return VertexWorker
 
     @staticmethod
@@ -126,11 +110,11 @@ class DatasetManager:
     def report_on_vertex(self, vertex_id):
         # returns a dict with keys being dimensions of simplices and values - no. of simplices of that dim in local VR
         # also returns a dict with keys being dimensions of operators and values - % of non-zero entries there
-        neighbours = self._get_neighbours(vertex_id)
-        distance_matrix = self._get_distance_matrix(neighbours)
+        neighbours = VertexWorker.get_neighbours(vertex_id)
+        distance_matrix = VertexWorker.get_distance_matrix(neighbours)
         cplx = VietorisRipsComplex(distance_matrix, self.epsilon, self.space_dimension)
         cplx.build_vr_complex()
-        local_vr = cplx._get_relevant_subcomplex({0})
+        local_vr = cplx.get_relevant_subcomplex({0})
         simplices_counter = Counter([len(simplex) - 1 for simplex in local_vr])
         operators = [get_boundary_operator(local_vr, dim) for dim in range(cplx.dim)]
         operators_counter = {i: 100 * len(np.argwhere(operator != 0)) / operator.size
