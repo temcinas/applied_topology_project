@@ -1,6 +1,6 @@
 import unittest
-import numpy as np
 import math
+import numpy as np
 
 from snf import get_arg_absmin, put_in_snf, get_snf, reduce_matrix, reduce_matrix_iter
 from manager import DatasetManager

@@ -1,7 +1,8 @@
-from complex import VietorisRipsComplex
+import math
 import multiprocessing as mp
 import numpy as np
-import math
+
+from complex import VietorisRipsComplex
 
 
 class VertexWorker:

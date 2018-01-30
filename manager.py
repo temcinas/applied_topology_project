@@ -3,6 +3,7 @@ import multiprocessing as mp
 
 from random import sample
 from collections import defaultdict, Counter
+from queue import Empty
 
 from workers import VertexWorker
 from complex import VietorisRipsComplex
@@ -50,9 +51,13 @@ class DatasetManager:
 
     def process_funct(self):
         while not self.pool.empty():
-            vertex_id = self.pool.get()
-            worker = VertexWorker(vertex_id=vertex_id)
-            worker.start_calculation()
+            try:
+                vertex_id = self.pool.get_nowait()
+            except Empty:
+                return
+            else:
+                worker = VertexWorker(vertex_id=vertex_id)
+                worker.start_calculation()
 
     def calculate_homologies(self):
         processes = []
