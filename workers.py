@@ -72,7 +72,7 @@ class VertexWorker:
         return np.array(matrix)
 
     def __init__(self, vertex_id):
-        print(vertex_id)
+        # print(vertex_id)
         # Distance_matrix - matrix of pairwise distances
         # Neighbours - ids of neighbours, 0th position is the vertex itself
 

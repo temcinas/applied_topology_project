@@ -124,4 +124,5 @@ class DatasetManager:
         operators = [get_boundary_operator(local_vr, dim) for dim in range(cplx.dim)]
         operators_counter = {i: 100 * len(np.argwhere(operator != 0)) / operator.size
                              for i, operator in enumerate(operators) if operator.size}
-        return simplices_counter, operators_counter
+        local_vr = [{neighbours[node] for node in simplex} for simplex in local_vr]
+        return simplices_counter, operators_counter, local_vr
